@@ -42,7 +42,7 @@ jobs:
       - name: Update token secret (if refreshed)
         if: success()
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           NEW_TOKEN=$(cat token.json | jq -c .)
           if [ -n "$NEW_TOKEN" ]; then
