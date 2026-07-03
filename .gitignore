@@ -1,0 +1,14 @@
+# Secrets - tuyệt đối không commit
+token.json
+client_secret*.json
+
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
