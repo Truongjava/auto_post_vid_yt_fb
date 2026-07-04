@@ -5,9 +5,9 @@ import time
 # ==========================================
 # CẤU HÌNH THÔNG TIN CỦA BẠN TẠI ĐÂY
 # ==========================================
-PAGE_ID = '1136619726201474'
-ACCESS_TOKEN = 'EAAOrOzEi4vkBRywSWysOi9TlLtdZANWBA8fdkRNIfMuXUoSeSL8lDZBmsieBPV5d9SbjYoesXQFALOgIed7Pl5GHP0JYZAbuPVP5wdSdbTTetCZCecHHzZCO3qZAmoOfQwaZCWZB8qd6AarE6LN08KAS9irHTJMOkmstRZB8u24uZADtWahr9nciytchoAVG1mJUU6FNCt'
-VIDEO_PATH = 'Luật Bất Thành Văn Khi Thuê Phòng Khách Sạn Tại Đà Lạt 🏨 #shorts #dalat #biann.mp4'
+PAGE_ID = os.environ.get("FB_PAGE_ID", "ĐIỀN_PAGE_ID_CỦA_BẠN_VÀO_ĐÂY")
+ACCESS_TOKEN = os.environ.get("FB_ACCESS_TOKEN", "DÁN_TOKEN_MÀ_BẠN_VỪA_COPY_VÀO_ĐÂY")
+VIDEO_PATH = os.environ.get("VIDEO_PATH", "video_test.mp4")  # Đường dẫn tới file video trên máy tính của bạn
 VIDEO_TITLE = 'Video Thử Nghiệm Hệ Thống'
 VIDEO_DESC = 'Đây là video được đăng tự động bằng Meta Graph API #automation #bot'
 

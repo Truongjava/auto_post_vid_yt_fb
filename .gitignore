@@ -1,6 +1,10 @@
 # Secrets - tuyệt đối không commit
 token.json
 client_secret*.json
+id_acess_token.txt
+
+# Video files
+*.mp4
 
 # Virtual environment
 venv/
