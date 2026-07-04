@@ -1,6 +1,8 @@
 import os
 import re
 import io
+import time
+import requests
 from auth import authenticate
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -24,6 +26,12 @@ VIDEO_MIME_TYPES = [
 
 CATEGORY_ID = os.environ.get("CATEGORY_ID", "24")          # Entertainment
 PRIVACY_STATUS = os.environ.get("PRIVACY_STATUS", "private")  # private / public
+
+# Facebook config
+FB_PAGE_ID = os.environ.get("FB_PAGE_ID", "")
+FB_ACCESS_TOKEN = os.environ.get("FB_ACCESS_TOKEN", "")
+FB_GRAPH_VERSION = os.environ.get("FB_GRAPH_VERSION", "v25.0")
+FB_CHUNK_SIZE = 4 * 1024 * 1024  # 4MB mỗi phân đoạn
 
 
 def get_credentials():
@@ -151,6 +159,89 @@ def upload_to_youtube(youtube, video_path, title, description, tags):
     return video_id
 
 
+def upload_to_facebook(video_path, title, description):
+    """Upload video lên Facebook Page qua Graph API (resumable upload 3 pha).
+    Trả về (success: bool, video_id: str | None)"""
+    if not FB_PAGE_ID or not FB_ACCESS_TOKEN:
+        print("  ⚠️  Bỏ qua Facebook: thiếu FB_PAGE_ID hoặc FB_ACCESS_TOKEN")
+        return False, None
+
+    graph_url = f"https://graph.facebook.com/{FB_GRAPH_VERSION}/{FB_PAGE_ID}/videos"
+    file_size = os.path.getsize(video_path)
+
+    print(f"  🎬 Facebook: Bắt đầu upload ({file_size / (1024*1024):.2f} MB)")
+
+    try:
+        # --- Phase 1: Khởi tạo phiên upload ---
+        print("  [FB Phase 1] Khởi tạo phiên...")
+        start_payload = {
+            "access_token": FB_ACCESS_TOKEN,
+            "upload_phase": "start",
+            "file_size": file_size,
+        }
+        start_res = requests.post(graph_url, data=start_payload).json()
+
+        if "upload_session_id" not in start_res:
+            print(f"  ❌ Facebook khởi tạo thất bại: {start_res}")
+            return False, None
+
+        session_id = start_res["upload_session_id"]
+        start_offset = int(start_res.get("start_offset", 0))
+        print(f"  ✅ Session ID: {session_id}")
+
+        # --- Phase 2: Upload từng phân đoạn ---
+        print("  [FB Phase 2] Upload phân đoạn...")
+        with open(video_path, "rb") as f:
+            chunk_index = 1
+            while start_offset < file_size:
+                f.seek(start_offset)
+                chunk_data = f.read(FB_CHUNK_SIZE)
+
+                transfer_payload = {
+                    "access_token": FB_ACCESS_TOKEN,
+                    "upload_phase": "transfer",
+                    "upload_session_id": session_id,
+                    "start_offset": start_offset,
+                }
+                transfer_res = requests.post(
+                    graph_url, data=transfer_payload,
+                    files={"video_file_chunk": chunk_data}
+                ).json()
+
+                if "error" in transfer_res:
+                    print(f"  ❌ Lỗi phân đoạn {chunk_index}: {transfer_res}")
+                    return False, None
+
+                start_offset = int(transfer_res["start_offset"])
+                progress = (start_offset / file_size) * 100
+                print(f"  📦 Phân đoạn {chunk_index}: {progress:.1f}%")
+                chunk_index += 1
+
+        # --- Phase 3: Hoàn tất & xuất bản ---
+        print("  [FB Phase 3] Hoàn tất & xuất bản...")
+        finish_payload = {
+            "access_token": FB_ACCESS_TOKEN,
+            "upload_phase": "finish",
+            "upload_session_id": session_id,
+            "title": title,
+            "description": description,
+            "video_state": "PUBLISHED",
+        }
+        finish_res = requests.post(graph_url, data=finish_payload).json()
+
+        if finish_res.get("success") or "video_id" in finish_res:
+            fb_video_id = finish_res.get("video_id", "đang xử lý")
+            print(f"  ✅ Facebook upload thành công! Video ID: {fb_video_id}")
+            return True, fb_video_id
+        else:
+            print(f"  ❌ Facebook hoàn tất thất bại: {finish_res}")
+            return False, None
+
+    except Exception as e:
+        print(f"  ❌ Facebook upload lỗi: {e}")
+        return False, None
+
+
 def update_sheet_status(service, row_index, new_status="done"):
     """Cập nhật cột PUBLIC của dòng thành 'done'."""
     # row_index là vị trí 0-indexed trong toàn bộ values (bao gồm header)
@@ -218,12 +309,17 @@ def main():
     video_id = upload_to_youtube(youtube, local_path, title, description, tags)
     print()
 
-    # 6. Cập nhật Sheet: not started → done
+    # 6. Upload lên Facebook
+    print("📘 Upload lên Facebook...")
+    fb_ok, fb_video_id = upload_to_facebook(local_path, title, description)
+    print()
+
+    # 7. Cập nhật Sheet: not started → done
     print("📝 Cập nhật Google Sheet...")
     # idx là vị trí trong rows (0-indexed), cần +1 cho header
     update_sheet_status(sheet_service, idx + 1)
 
-    # 7. Dọn dẹp: xóa file video đã tải về
+    # 8. Dọn dẹp: xóa file video đã tải về
     if os.path.exists(local_path):
         os.remove(local_path)
         print(f"  🗑️  Đã xóa file tạm: {local_path}")
@@ -232,7 +328,11 @@ def main():
     print("=" * 60)
     print("🎉 Hoàn thành!")
     print(f"   Video: {title[:60]}...")
-    print(f"   Link: https://youtu.be/{video_id}")
+    print(f"   YouTube: https://youtu.be/{video_id}")
+    if fb_ok:
+        print(f"   Facebook: Video ID {fb_video_id}")
+    else:
+        print(f"   Facebook: ⚠️  Không upload được (xem log lỗi phía trên)")
     print(f"   Sheet: dòng {idx + 2} → done")
 
 
