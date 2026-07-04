@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: auto-upload-pipeline
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash start.sh
+    envVars:
+      - key: SHEET_ID
+        value: 1nJUjjmUYWWdCsd0A3XTvRzUsLSEhEMeq7-KNVHfUsKw
+      - key: SHEET_RANGE
+        value: Trang tính1
+      - key: DRIVE_FOLDER_ID
+        value: 1g7bn3uCTDv41aW-RpH8zH33_y4THHW4d
+      - key: PRIVACY_STATUS
+        value: private
+      - key: CATEGORY_ID
+        value: "24"
+      - key: FB_GRAPH_VERSION
+        value: v25.0
+      - key: AUTH_KEY
+        value: biann2024
+      - key: FB_PAGE_ID
+        sync: false
+      - key: FB_ACCESS_TOKEN
+        sync: false
+      - key: CLIENT_SECRET_JSON
+        sync: false
+      - key: TOKEN_JSON
+        sync: false
