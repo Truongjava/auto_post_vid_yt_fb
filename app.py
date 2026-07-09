@@ -1,4 +1,5 @@
 import os
+import gc
 import json
 import datetime
 import threading
@@ -50,6 +51,7 @@ def run_pipeline():
     try:
         import pipeline
         pipeline.main()
+        gc.collect()  # Giải phóng RAM sau upload video
         pipeline_status["last_result"] = "success"
         print(f"[{datetime.datetime.now()}] ✅ Pipeline hoàn thành")
     except Exception as e:

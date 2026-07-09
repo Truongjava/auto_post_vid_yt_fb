@@ -139,7 +139,7 @@ def upload_to_youtube(youtube, video_path, title, description, tags):
         },
     }
 
-    media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+    media = MediaFileUpload(video_path, chunksize=8*1024*1024, resumable=True)  # 8MB chunk - tránh OOM trên Render free 512MB
 
     print(f"  Đang upload lên YouTube...")
     print(f"  Tiêu đề: {title[:80]}...")
