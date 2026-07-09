@@ -1,7 +1,7 @@
 import os
-import gc
 import json
 import datetime
+import subprocess
 import threading
 from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -38,7 +38,7 @@ def write_secrets():
 
 
 def run_pipeline():
-    """Chạy pipeline trong background thread."""
+    """Chạy pipeline trong subprocess riêng — khi kết thúc, OS thu hồi TOÀN BỘ RAM."""
     global pipeline_status
     if pipeline_status["running"]:
         print("⚠️ Pipeline đang chạy, bỏ qua lần này")
@@ -49,11 +49,28 @@ def run_pipeline():
     pipeline_status["last_error"] = None
 
     try:
-        import pipeline
-        pipeline.main()
-        gc.collect()  # Giải phóng RAM sau upload video
-        pipeline_status["last_result"] = "success"
-        print(f"[{datetime.datetime.now()}] ✅ Pipeline hoàn thành")
+        # Chạy trong process riêng → RAM được OS thu hồi triệt để khi xong
+        result = subprocess.run(
+            ["python", "pipeline.py"],
+            capture_output=True,
+            text=True,
+            timeout=1800,  # 30 phút timeout
+        )
+        print(result.stdout)
+        if result.stderr:
+            print("[STDERR]", result.stderr)
+
+        if result.returncode == 0:
+            pipeline_status["last_result"] = "success"
+            print(f"[{datetime.datetime.now()}] ✅ Pipeline hoàn thành")
+        else:
+            pipeline_status["last_result"] = "failed"
+            pipeline_status["last_error"] = result.stderr or f"Exit code: {result.returncode}"
+            print(f"[{datetime.datetime.now()}] ❌ Pipeline lỗi (exit {result.returncode})")
+    except subprocess.TimeoutExpired:
+        pipeline_status["last_result"] = "failed"
+        pipeline_status["last_error"] = "Timeout sau 30 phút"
+        print(f"[{datetime.datetime.now()}] ❌ Pipeline timeout")
     except Exception as e:
         pipeline_status["last_result"] = "failed"
         pipeline_status["last_error"] = str(e)
