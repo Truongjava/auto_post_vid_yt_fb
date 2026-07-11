@@ -8,11 +8,11 @@ services:
     startCommand: python app.py
     envVars:
       - key: SHEET_ID
-        value: 1nJUjjmUYWWdCsd0A3XTvRzUsLSEhEMeq7-KNVHfUsKw
+        value: 1NDsmxhPQEnA8Dh-JRmITQt7yFlFuLlOY9Ql_uktpMCk
       - key: SHEET_RANGE
         value: Trang tính1
       - key: DRIVE_FOLDER_ID
-        value: 1g7bn3uCTDv41aW-RpH8zH33_y4THHW4d
+        value: 1i2JYb6XElc24y1DWgT9Pu90t1A8qhjXq
       - key: PRIVACY_STATUS
         value: private
       - key: CATEGORY_ID

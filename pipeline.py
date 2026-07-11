@@ -14,6 +14,7 @@ DRIVE_FOLDER_ID = os.environ.get("DRIVE_FOLDER_ID", "1g7bn3uCTDv41aW-RpH8zH33_y4
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
