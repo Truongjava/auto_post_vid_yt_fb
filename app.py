@@ -155,34 +155,34 @@ if __name__ == "__main__":
     # Setup scheduler với thời gian random trong khung giờ
     # Tránh YouTube phát hiện đăng tự động theo giờ cố định
     #
-    # Chiến lược: Đăng đúng giờ vàng khán giả Mỹ online
+    # Chiến lược: Đăng đúng 2 khung giờ vàng nhiều view nhất của Mỹ
     #
-    # 🌅 US Morning (7-9 AM EST = 18-20h VN) → Upload 18:00-20:00 VN
-    #    Cron 11:00 UTC + random 0-120 phút
-    # 🥪 US Lunch  (12-1:30 PM EST = 23-00:30h VN) → Upload 23:00-00:30 VN
+    # 🥪 US Lunch    (12-1:30 PM EDT = 23:00-00:30 VN)
     #    Cron 16:00 UTC + random 0-90 phút
+    # 🔥 US Prime    (7-10 PM EDT = 6:00-9:00 AM VN hôm sau)
+    #    Cron 23:00 UTC + random 0-120 phút
     scheduler.add_job(
         lambda: threading.Thread(
-            target=delayed_run, args=("🌅 Tối 18:00-20:00 VN (US morning 7-9AM EST)", 120), daemon=True
-        ).start(),
-        "cron",
-        hour=11,
-        minute=0,
-        id="us_morning_window",
-    )
-    scheduler.add_job(
-        lambda: threading.Thread(
-            target=delayed_run, args=("🥪 Đêm 23:00-00:30 VN (US lunch 12-1:30PM EST)", 90), daemon=True
+            target=delayed_run, args=("🥪 Đêm 23:00-00:30 VN (US Lunch)", 90), daemon=True
         ).start(),
         "cron",
         hour=16,
         minute=0,
         id="us_lunch_window",
     )
+    scheduler.add_job(
+        lambda: threading.Thread(
+            target=delayed_run, args=("🔥 Sáng 6:00-8:00 AM VN (US Prime Time)", 120), daemon=True
+        ).start(),
+        "cron",
+        hour=23,
+        minute=0,
+        id="us_prime_window",
+    )
     scheduler.start()
-    print("⏰ Scheduler đã khởi động (giờ vàng khán giả Mỹ):")
-    print("   🌅 Tối  18:00-20:00 VN → US Morning 7-9AM EST")
-    print("   🥪 Đêm  23:00-00:30 VN → US Lunch 12-1:30PM EST")
+    print("⏰ Scheduler đã khởi động (2 khung giờ vàng Mỹ):")
+    print("   🥪 Đêm  23:00-00:30 VN → US Lunch 12-1:30PM EDT")
+    print("   🔥 Sáng 6:00-8:00 AM VN → US Prime 7-10PM EDT")
 
     # Start Flask server
     port = int(os.environ.get("PORT", 5000))
