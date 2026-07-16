@@ -155,34 +155,34 @@ if __name__ == "__main__":
     # Setup scheduler với thời gian random trong khung giờ
     # Tránh YouTube phát hiện đăng tự động theo giờ cố định
     #
-    # Chiến lược: Đăng trước 1-2h để YouTube kịp index, đón đầu khán giả Mỹ
+    # Chiến lược: Đăng đúng giờ vàng khán giả Mỹ online
     #
-    # 🌅 US Morning (7-9 AM EST = 18-20h VN) → Upload 16:00-17:00 VN
-    #    Cron 9:00 UTC + random 0-60 phút
-    # 🥪 US Lunch  (12-1:30 PM EST = 23-00:30h VN) → Upload 21:00-22:30 VN
-    #    Cron 14:00 UTC + random 0-90 phút
+    # 🌅 US Morning (7-9 AM EST = 18-20h VN) → Upload 18:00-20:00 VN
+    #    Cron 11:00 UTC + random 0-120 phút
+    # 🥪 US Lunch  (12-1:30 PM EST = 23-00:30h VN) → Upload 23:00-00:30 VN
+    #    Cron 16:00 UTC + random 0-90 phút
     scheduler.add_job(
         lambda: threading.Thread(
-            target=delayed_run, args=("🌅 Chiều 16:00-17:00 VN (US morning)", 60), daemon=True
+            target=delayed_run, args=("🌅 Tối 18:00-20:00 VN (US morning 7-9AM EST)", 120), daemon=True
         ).start(),
         "cron",
-        hour=9,
+        hour=11,
         minute=0,
         id="us_morning_window",
     )
     scheduler.add_job(
         lambda: threading.Thread(
-            target=delayed_run, args=("🥪 Tối 21:00-22:30 VN (US lunch)", 90), daemon=True
+            target=delayed_run, args=("🥪 Đêm 23:00-00:30 VN (US lunch 12-1:30PM EST)", 90), daemon=True
         ).start(),
         "cron",
-        hour=14,
+        hour=16,
         minute=0,
         id="us_lunch_window",
     )
     scheduler.start()
-    print("⏰ Scheduler đã khởi động (tối ưu cho khán giả Mỹ):")
-    print("   🌅 Chiều 16:00-17:00 VN → đón US Morning 7-9AM EST")
-    print("   🥪 Tối   21:00-22:30 VN → đón US Lunch 12-1:30PM EST")
+    print("⏰ Scheduler đã khởi động (giờ vàng khán giả Mỹ):")
+    print("   🌅 Tối  18:00-20:00 VN → US Morning 7-9AM EST")
+    print("   🥪 Đêm  23:00-00:30 VN → US Lunch 12-1:30PM EST")
 
     # Start Flask server
     port = int(os.environ.get("PORT", 5000))
