@@ -1,5 +1,7 @@
 import os
 import json
+import random
+import time
 import datetime
 import subprocess
 import threading
@@ -19,6 +21,15 @@ pipeline_status = {
     "last_result": None,
     "last_error": None,
 }
+
+
+def delayed_run(window_name, delay_minutes_max):
+    """Ngủ random trong khoảng thời gian cho phép, rồi mới chạy pipeline.
+    Giúp tránh YouTube phát hiện đăng tự động theo giờ cố định."""
+    delay_seconds = random.randint(0, delay_minutes_max * 60)
+    print(f"⏳ [{window_name}] Đợi {delay_seconds // 60} phút {delay_seconds % 60} giây rồi chạy...")
+    time.sleep(delay_seconds)
+    run_pipeline()
 
 
 def write_secrets():
@@ -141,24 +152,33 @@ if __name__ == "__main__":
     # Ghi secrets ra file
     write_secrets()
 
-    # Setup scheduler
-    # 10:30 VN = 3:30 UTC, 18:00 VN = 11:00 UTC
+    # Setup scheduler với thời gian random trong khung giờ
+    # Tránh YouTube phát hiện đăng tự động theo giờ cố định
+    #
+    # Khung sáng: 10:30 - 12:00 VN = cron 3:30 UTC + random 0-90 phút
+    # Khung tối:  18:30 - 20:00 VN = cron 11:30 UTC + random 0-90 phút
     scheduler.add_job(
-        lambda: threading.Thread(target=run_pipeline, daemon=True).start(),
+        lambda: threading.Thread(
+            target=delayed_run, args=("Sáng 10:30-12:00 VN", 90), daemon=True
+        ).start(),
         "cron",
         hour=3,
         minute=30,
-        id="morning_1030_vn",
+        id="morning_window",
     )
     scheduler.add_job(
-        lambda: threading.Thread(target=run_pipeline, daemon=True).start(),
+        lambda: threading.Thread(
+            target=delayed_run, args=("Tối 18:30-20:00 VN", 90), daemon=True
+        ).start(),
         "cron",
         hour=11,
-        minute=0,
-        id="evening_1800_vn",
+        minute=30,
+        id="evening_window",
     )
     scheduler.start()
-    print("⏰ Scheduler đã khởi động (10:30 & 18:00 VN)")
+    print("⏰ Scheduler đã khởi động:")
+    print("   🌅 Khung sáng:  10:30 - 12:00 VN (random)")
+    print("   🌙 Khung tối:   18:30 - 20:00 VN (random)")
 
     # Start Flask server
     port = int(os.environ.get("PORT", 5000))
