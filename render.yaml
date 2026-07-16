@@ -14,7 +14,7 @@ services:
       - key: DRIVE_FOLDER_ID
         value: 1i2JYb6XElc24y1DWgT9Pu90t1A8qhjXq
       - key: PRIVACY_STATUS
-        value: private
+        value: public 
       - key: CATEGORY_ID
         value: "24"
       - key: FB_GRAPH_VERSION
